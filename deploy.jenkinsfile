@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+    
+    environment {
+        NEXUS_REPO_URL = 'http://localhost:8081/repository/maven-snapshots/'
+        NEXUS_CREDENTIALS_ID = credentials('nexus-credentials')
+        POM_FILE_PATH = 'samplesoapCompositeExporter/pom.xml'
+        GITHUB_CREDENTIALS = credentials('git-credentials')
+        NFS_MNT_LOC = "/var/lib/jenkins/workspace/mi-deploy"
+    }
+
+    stages {
+        stage('Clone Configurations') {
+            steps {
+                script {
+                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/InduraVidyasekara/jenkins-nexus-sync-poc', credentialsId: GITHUB_CREDENTIALS]]])
+                }
+            }
+        }
+
+        stage ('Read POM File'){
+            steps {
+                script {
+                    def pom = readMavenPom file: "${POM_FILE_PATH}"
+
+                    def groupId = pom.getGroupId()
+                    def artifactId = pom.getArtifactId()
+                    def version = pom.getVersion()
+
+                    echo "${artifactId}/target/${artifactId}_${version}.car"
+                }
+            }
+        }
+
+        stage('Download .car from Nexus') {
+            steps {
+                script {
+                    
+                    def pom = readMavenPom file: "${POM_FILE_PATH}"
+
+                    def groupId = pom.getGroupId()
+                    def artifactId = pom.getArtifactId()
+                    def version = pom.getVersion()
+
+                    echo "${artifactId}/target/${artifactId}_${version}.car"
+
+                    def nexusApiUrl = "${NEXUS_REPO_URL}/com/example/${artifactId}/${version}/${artifactId}_${version}.car"
+
+                    sh "mkdir -p /tmp/nexus-artifacts"
+                    sh "curl -u $NEXUS_CREDENTIALS_ID_USR:$NEXUS_CREDENTIALS_ID_PSW -o /tmp/nexus-artifacts/${artifactId}_${version}.car ${nexusApiUrl}"
+                }
+            }
+        }
+        
+        stage('Move to NFS mount location') {
+            steps {
+                script {
+                    def pom = readMavenPom file: "${POM_FILE_PATH}"
+
+                    def groupId = pom.getGroupId()
+                    def artifactId = pom.getArtifactId()
+                    def version = pom.getVersion()
+                    
+                    sh "cp /tmp/nexus-artifacts/${artifactId}_${version}.car ${NFS_MNT_LOC}"
+                }
+            }
+        }
+
+    }
+    
+   
+}
+

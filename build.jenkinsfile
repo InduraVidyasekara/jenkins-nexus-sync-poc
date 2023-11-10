@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    environment {
+        GITHUB_CREDENTIALS = credentials('git-credentials')
+        NEXUS_REPO_URL = 'http://localhost:8081/repository/maven-snapshots/'
+        NEXUS_CREDENTIALS_ID = credentials('nexus-credentials')
+    }
+
+    stages {
+        stage('Clone') {
+            steps {
+                script {
+                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/InduraVidyasekara/jenkins-nexus-sync-poc', credentialsId: GITHUB_CREDENTIALS]]])
+                }
+            }
+        }
+        
+        stage ('Read POM File'){
+            steps {
+                script {
+                    def pom = readMavenPom file: 'samplesoapCompositeExporter/pom.xml'
+
+                    def groupId = pom.getGroupId()
+                    def artifactId = pom.getArtifactId()
+                    def version = pom.getVersion()
+
+                    echo "${artifactId}/target/${artifactId}-${version}.car"
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    sh 'mvn clean install -Dmaven.test.skip=True'
+                }
+            }
+        }
+        
+        stage('Upload to Nexus') {
+            steps {
+                script {
+                    def pom = readMavenPom file: 'samplesoapCompositeExporter/pom.xml'
+
+                    def groupId = pom.getGroupId()
+                    def artifactId = pom.getArtifactId()
+                    def version = pom.getVersion()
+
+                    echo "${artifactId}/target/${artifactId}-${version}.car"
+
+                    def nexusApiUrl = "http://localhost:8081/repository/maven-snapshots/com/example/${artifactId}/${version}/${artifactId}_${version}.car"
+                    sh "curl -v --user $NEXUS_CREDENTIALS_ID_USR:$NEXUS_CREDENTIALS_ID_PSW --upload-file ${artifactId}/target/${artifactId}_${version}.car ${nexusApiUrl}"
+                }
+            }
+
+
+        }
+    }
+}
