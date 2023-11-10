@@ -7,13 +7,14 @@ pipeline {
         POM_FILE_PATH = 'samplesoapCompositeExporter/pom.xml'
         GITHUB_CREDENTIALS = credentials('git-credentials')
         NFS_MNT_LOC = "/var/lib/jenkins/workspace/mi-deploy"
+        JENKINS_PAT = credentials('jenkins-pat')
     }
 
     stages {
         stage('Clone Configurations') {
             steps {
                 script {
-                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/InduraVidyasekara/jenkins-nexus-sync-poc', credentialsId: GITHUB_CREDENTIALS]]])
+                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/InduraVidyasekara/jenkins-nexus-sync-poc', credentialsId: JENKINS_PAT]]])
                 }
             }
         }
