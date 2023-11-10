@@ -11,10 +11,17 @@ pipeline {
     stages {
         stage('Clone') {
             steps {
-                script {
-                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/InduraVidyasekara/jenkins-nexus-sync-poc', credentialsId: JENKINS_PAT]]])
-                }
+                    checkout([$class: 'GitSCM', 
+                    branches: [[name: '*/main']], 
+                    userRemoteConfigs: [[
+                      url: 'https://github.com/InduraVidyasekara/jenkins-nexus-sync-poc', 
+                      credentialsId: 'jenkins-pat', 
+                      credentials: [[
+                          usernamePassword(credentialsId: 'jenkins-pat')]]
+                        ]]
+                    ])
             }
+
         }
         
         stage ('Read POM File'){
