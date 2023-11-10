@@ -13,9 +13,18 @@ pipeline {
     stages {
         stage('Clone Configurations') {
             steps {
-                script {
-                    checkout([$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/InduraVidyasekara/jenkins-nexus-sync-poc', credentialsId: JENKINS_PAT]]])
-                }
+                 steps {
+                checkout([$class: 'GitSCM', 
+                  branches: [[name: '*/main']], 
+                  userRemoteConfigs: [[
+                      url: 'https://github.com/InduraVidyasekara/jenkins-nexus-sync-poc', 
+                      credentialsId: 'jenkins-pat', 
+                      credentials: [[
+                          usernamePassword(credentialsId: 'jenkins-pat')]]
+                  ]]
+])
+
+            }
             }
         }
 
