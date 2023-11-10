@@ -11,8 +11,8 @@ pipeline {
                       credentialsId: 'jenkins-pat', 
                       credentials: [[
                           usernamePassword(credentialsId: 'jenkins-pat')]]
-                  ]]
-])
+                        ]]
+                    ])
 
             }
         }
